@@ -83,6 +83,24 @@ class Message(list):
         """Return Message as a string (rather than actual list of characters)."""
         return "".join(self)
 
+    def ins_mut(self):
+        """Inserts random character into the Message."""
+        break_index = random.randint(0,len(self))
+        random_char = random.choice(VALID_CHARS)
+        self.insert(break_index, random_char)
+
+    def del_mut(self):
+        """Deletes random character from the Message."""
+        break_index = random.randint(0,len(self)-1)
+        del self[break_index]
+
+    def sub_mut(self):
+        """Substitutes random character into the Message."""
+        break_index = random.randint(0,len(self)-1)
+        random_char = random.choice(VALID_CHARS)
+        del self[break_index]
+        self.insert(break_index, random_char)
+
 
 # -----------------------------------------------------------------------------
 # Genetic operators
@@ -99,7 +117,6 @@ def levenshtein_distance(s1,s2,cache):
     >>> levenshtein_distance("vice", "lose", {})
     3
     """
-
     #base cases
     if s1 == "":
         return len(s2)
@@ -134,37 +151,8 @@ def evaluate_text(message, goal_text, verbose=VERBOSE):
         print("{msg!s}\t[Distance: {dst!s}]".format(msg=message, dst=distance))
     return (distance, )     # Length 1 tuple, required by DEAP
 
-def ins_mut(message):
-    """Inserts random character into the Message.
 
-    >>> ins_mut("HELLO")
-    >>> ins_mut("OH NOES")
-    """
-    break_index = random.randint(0,len(message))
-    random_char = random.choice(VALID_CHARS)
-    return message[:break_index] + [random_char] + message[break_index:]
-
-def del_mut(message):
-    """Deletes random character from the Message.
-
-    >>> del_mut("HELLO")
-    >>> del_mut("OH NOES")
-    """
-    break_index = random.randint(0,len(message)-1)
-    return message[:break_index] + message[break_index+1:]
-
-def sub_mut(message):
-    """Substitutes random character into the Message.
-
-    >>> sub_mut("HELLO")
-    >>> sub_mut("OH NOES")
-    """
-    break_index = random.randint(0,len(message))
-    random_char = random.choice(VALID_CHARS)
-    return message[:break_index] + [random_char] + message[break_index + 1:]
-
-
-def mutate_text(message, prob_ins=0.05, prob_del=0.05, prob_sub=0.05):
+def mutate_text(message, prob_ins=0.15, prob_del=0.15, prob_sub=0.15):
     """Given a Message and independent probabilities for each mutation type,
     return a length 1 tuple containing the mutated Message.
 
@@ -180,11 +168,11 @@ def mutate_text(message, prob_ins=0.05, prob_del=0.05, prob_sub=0.05):
     """
 
     if random.random() < prob_ins:
-        message = ins_mut(message)
+        message.ins_mut()
     if random.random() < prob_del:
-        message = del_mut(message)
+        message.del_mut()
     if random.random() < prob_sub:
-        message = sub_mut(message)
+        message.sub_mut()
     return (message,)
 
 
@@ -237,8 +225,10 @@ def evolve_string(text):
 
     # Run simple EA
     # (See: http://deap.gel.ulaval.ca/doc/dev/api/algo.html for details)
-    pop, log = algorithms.eaSimple(pop,
+    pop, log = algorithms.eaMuPlusLambda(pop,
                                    toolbox,
+                                   100,
+                                   300,
                                    cxpb=0.5,    # Prob. of crossover (mating)
                                    mutpb=0.2,   # Probability of mutation
                                    ngen=500,    # Num. of generations to run
@@ -250,21 +240,16 @@ def evolve_string(text):
 # -----------------------------------------------------------------------------
 # Run if called from the command line
 # -----------------------------------------------------------------------------
-if __name__ == "__main__":
-    # import doctest
-    # # doctest.testmod()
-    # doctest.run_docstring_examples(mutate_text, globals(), verbose = True)
 
+if __name__ == "__main__":
     # Get goal message from command line (optional)
     if len(sys.argv) == 1:
         # Default goal of the evolutionary algorithm if not specified.
-        # Pretty much the opposite of http://xkcd.com/534
         goal = "SKYNET IS NOW ONLINE"
     else:
         goal = " ".join(sys.argv[1:])
 
     # Verify that specified goal contains only known valid characters
-    # (otherwise we'll never be able to evolve that string)
     for char in goal:
         if char not in VALID_CHARS:
             msg = "Given text {goal!r} contains illegal character {char!r}.\n"

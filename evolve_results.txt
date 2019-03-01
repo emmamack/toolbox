@@ -1,0 +1,11 @@
+Through experimenting with changing mutation rates and DEAP algorithms, I've concluded:
+
+- The eaMuPlusLambda algorithm is faster than the euSimple algorithm.
+
+- The optimal mutation probability (of deletion or substitution or insertion) to optimize speed is about 0.1.
+I ran two tests with each of (0.05, 0.1, 0.15 and 0.2) as the probabilities on a 9-character goal string and the results are as follows:
+0.05 --> 16, 17 s
+0.1 --> 9, 9 s
+0.15 --> 9, 10 s
+0.2 --> 12, 11 s
+These tests weren't incredibly scientific; for future steps I would sweep a more detailed range of values.
